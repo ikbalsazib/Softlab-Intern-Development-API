@@ -1,88 +1,54 @@
 const express = require("express");
+const mongoose = require('mongoose');
+const dotenv = require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 
 const cors = require('cors');
-app.use(cors())
+app.use(cors());
+
+
+/**
+ *  Router File Import
+ */
+const userRoutes = require('./routes/user')
 
 const port = 3000;
 
-const users = [
-    {_id: '1', name: 'Sazib', phoneNo: '01773253900'},
-    {_id: '2', name: 'Sojol', phoneNo: '01731079193'},
-    {_id: '3', name: 'Sobur', phoneNo: '01773853656'},
-];
+/**
+ * MAIN BASE ROUTER WITH IMPORTED ROUTES
+ */
+app.use('/api/user', userRoutes);
 
 /**
- * MAIN BASE GET PATH
- * () => {}
+ * NODEJS SERVER
+ * PORT CONTROL
+ * MongoDB Connection
+ * IF PASSWORD contains @ then encode with https://meyerweb.com/eric/tools/dencoder/
+ * Database Name roc-ecommerce
+ * User Access authSource roc-ecommerce
  */
-
-app.get('/get-all-users', (req, res) => {
-    // Data
-    const allUsers = [...users];
-
-
-    // Result
-    const result = {
-        success: true,
-        message: 'Success',
-        data: allUsers
+mongoose.connect(
+    `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@localhost:27017/${process.env.DB_NAME}?authSource=${process.env.AUTH_SOURCE}`,
+    // `mongodb://localhost:27017/${process.env.DB_NAME}`,
+    {
+        useNewUrlParser: true,
+        //  useFindAndModify: false,
+        useUnifiedTopology: true,
+        //  useCreateIndex: true
     }
+)
+    .then(() => {
+        const port = process.env.PORT || 3000;
+        app.listen(port, () => console.log(`Server is running at port:${port}`));
+        console.log('Connected to mongoDB');
 
-    res.status(200)
-        .json(result)
-})
-
-app.get('/get-user/:id', (req, res) => {
-    // Data
-    const id = req.params.id;
-    console.log('users', users);
-    const userss = [...users]
-    const data = userss.find(f => f._id === id);
-    console.log('data', data)
-
-    // Result
-    const result = {
-        success: true,
-        message: 'Success',
-        data: data
-    }
-
-    res.status(200)
-        .json(result)
-})
-
-
-app.post('/add-user', (req, res, next) => {
-
-    const data = req.body;
-    const finalData = {...data, ...{_id: (users.length + 1).toString()}}
-    console.log('finalData', finalData)
-    users.push(finalData);
-
-    res.status(200).json({
-        success: true,
-        message: 'Success',
-        data: data
     })
-})
-
-app.put('/edit-user/:id', (req, res, next) => {
-    const id = req.params.id;
-    const data = req.body;
-
-    const index = users.findIndex(f => f._id === id);
-    users[index] = {...data, ...{_id: id}}
-
-    res.status(200).json({
-        success: true,
-        message: 'Success',
-        data: data
+    .catch(err => {
+        console.error('Oops! Could not connect to mongoDB Cluster0', err);
     })
-})
 
 
-app.listen(port, () => console.log(`Server is running at port:${port}`));
+// app.listen(port, () => console.log(`Server is running at port:${port}`));
 
